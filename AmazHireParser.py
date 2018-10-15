@@ -1,7 +1,8 @@
 # coding: utf-8
 
-import docx # pip install python-docx
+# import docx # pip install python-docx
 import re
+import sqlite3
 import os
 import csv
 import pandas as pd
@@ -54,15 +55,18 @@ def Search(candicemail): # функция поиска по тексту. Выз
 
     time.sleep(15)
 
-    FindProfile = browser.find_element_by_css_selector('#app > div > div.Layout-container___2p9Cf > div.Layout-content___Jsbfq > div > div > div.Search-main___2MzEQ > main > div.Profiles-profiles___60VKV > div.ShortProfile-wrapper_visited___3Rudd > div > div.Card-grid___1E537.Card-grid_emptyTags___308lk > div.Card-content___31v2o > div > div.ShortProfile-body___3VBbs > div > div.MainInfo-title___3gHQf > div.MainInfo-title-content___1Ek61 > a')
+    #FindProfile = browser.find_element_by_css_selector('#app > div > div.Layout-container___2p9Cf > div.Layout-content___Jsbfq > div > div > div.Search-main___2MzEQ > main > div.Profiles-profiles___60VKV > div.ShortProfile-wrapper_visited___3Rudd > div > div.Card-grid___1E537.Card-grid_emptyTags___308lk > div.Card-content___31v2o > div > div.ShortProfile-body___3VBbs > div > div.MainInfo-title___3gHQf > div.MainInfo-title-content___1Ek61 > a')
 
+    #FindProfile = browser.find_element_by_class_name('MainInfo-link___1wBnD')
+
+    # class = MainInfo-link___1wBnD
     #profileresults = browser.find_element_by_partial_link_text("https://search.amazinghiring.com/profiles/")
     #print('profileresults', profileresults)
 
     try:
         linktoprofile = driver.find_element_by_class_name('MainInfo-link___1wBnD')
-        heading1 = driver.find_element_by_tag_name('h1')
-        print(heading1)
+        #heading1 = driver.find_element_by_tag_name('h1')
+        #print(heading1)
     except:
         print('Nothing was found')
     #class = MainInfo-link___1wBnD
@@ -149,11 +153,16 @@ def OpenBrowser():
     #Passwordinsert = browser.find_element_by_css_selector('#password')
     Emailinsert.send_keys(username)
     Passwordinsert.send_keys(password)
-    time.sleep(1)
+    time.sleep(0.3)
     Passwordinsert.send_keys(Keys.ENTER)
     time.sleep(3)
     ReadFolderAndFiles(content)
 
+
+conn = sqlite3.connect('db.sqlite')
+cur = conn.cursor()
+cur.execute('DROP TABLE IF EXISTS Counts')
+cur.execute('''CREATE TABLE Counts (org TEXT, count INTEGER)''')
 
 browser = webdriver.Chrome()
 OpenBrowser()
