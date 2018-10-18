@@ -28,15 +28,15 @@ cwd = os.getcwd() + '\\'
 content = []
 
 
-def PutToDB(linktoprofile, candicemail):
+def PutToDB(finallinktoprofile, candicemail):
     global cur
     global conn
     print('Trying to put him in DB')
     cur.execute('SELECT amazeprofile FROM Counts WHERE email = ? ', (candicemail,))
     row = cur.fetchone()
     try:
-        print('Im trying')
-        cur.execute('INSERT INTO Counts (amazeprofile) VALUES (?)', (linktoprofile,)) # что-то здесь нечисто
+        print('Im trying', finallinktoprofile)
+        cur.execute('INSERT INTO Counts (amazeprofile) VALUES (?)', (finallinktoprofile,)) # что-то здесь нечисто
         print('After this line')
         conn.commit()
         print('After conn commit line')
@@ -49,11 +49,19 @@ def Search(candicemail):
     print(candicemailconstr)
     URLconstr = ('https://search.amazinghiring.com/profiles/?q=booleanText[0]:' + candicemailconstr)
     browser.get(URLconstr)
-    time.sleep(15)
+    time.sleep(10)
     try:
-        linktoprofile = browser.find_element_by_xpath("//a[contains(@href,'profile')]").click()
-        print('I found some guy')
-        PutToDB(linktoprofile, candicemail)
+        linktoprofile = browser.find_element_by_xpath("//a[contains(@href,'profile')]")
+        print('I found some guy', linktoprofile)
+        linktoprofile.click()
+        time.sleep(20)
+        #finalllylink = browser.getCurrentUrl() # не работает
+        #print(browser.current_url)
+        print('Finally link', browser.current_url)
+        finallinktoprofile = browser.current_url
+        #linktoprofile.getAttribute(href)
+
+        PutToDB(finallinktoprofile, candicemail)
     except:
         print('Nothing was found')
 
@@ -127,6 +135,5 @@ conn = sqlite3.connect('db.sqlite')
 cur = conn.cursor()
 cur.execute('DROP TABLE IF EXISTS Counts')
 cur.execute('''CREATE TABLE Counts (email TEXT, count INTEGER, amazeprofile TEXT)''')
-
 browser = webdriver.Chrome()
 OpenBrowser()
