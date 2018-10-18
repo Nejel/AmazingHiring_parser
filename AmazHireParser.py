@@ -28,15 +28,15 @@ cwd = os.getcwd() + '\\'
 content = []
 
 
-def PutToDB(finallinktoprofile, candicemail):
+def PutToDB(linktoprofile, candicemail):
     global cur
     global conn
     print('Trying to put him in DB')
     cur.execute('SELECT amazeprofile FROM Counts WHERE email = ? ', (candicemail,))
     row = cur.fetchone()
     try:
-        print('Im trying', finallinktoprofile)
-        cur.execute('INSERT INTO Counts (amazeprofile) VALUES (?)', (finallinktoprofile,)) # что-то здесь нечисто
+        print('Im trying', linktoprofile)
+        cur.execute('INSERT INTO Counts (email, count, amazeprofile) VALUES (?, 1, ?)', (candicemail, linktoprofile)) # что-то здесь нечисто
         print('After this line')
         conn.commit()
         print('After conn commit line')
@@ -50,18 +50,25 @@ def Search(candicemail):
     URLconstr = ('https://search.amazinghiring.com/profiles/?q=booleanText[0]:' + candicemailconstr)
     browser.get(URLconstr)
     time.sleep(10)
+
     try:
-        linktoprofile = browser.find_element_by_xpath("//a[contains(@href,'profile')]")
+        linktoprofile = browser.find_element_by_xpath("//a[contains(@href,'profile')]").get_attribute("href")
         print('I found some guy', linktoprofile)
-        linktoprofile.click()
-        time.sleep(20)
+        #linktoprofile.click()
+        #time.sleep(1)
         #finalllylink = browser.getCurrentUrl() # не работает
         #print(browser.current_url)
-        print('Finally link', browser.current_url)
-        finallinktoprofile = browser.current_url
+
+        #print('Finally link', browser.current_url)
+        #main_window = browser.current_window_handle
+        #browser.switch_to_window(main_window)
+        #browser.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.TAB)
+
+        #finallinktoprofile = browser.current_url
+        #print('Finally link2', finallinktoprofile)
         #linktoprofile.getAttribute(href)
 
-        PutToDB(finallinktoprofile, candicemail)
+        PutToDB(linktoprofile, candicemail)
     except:
         print('Nothing was found')
 
@@ -75,7 +82,9 @@ def getText(filename): # функция получения текста из ф�
     #DeprecationWarning: Call to deprecated function get_sheet_by_name (Use wb[sheetname]).
     sheet = workbook["Sheet1"]
     print(sheet)
-    imax = 3
+    row_count = sheet.max_row
+    print(row_count)
+    imax = int(row_count)
     for i in range (2, imax):
         #Candicemail = str(sheet['A'+str(i)].value)
         #Candicemail = sheet['A2']
@@ -133,7 +142,7 @@ def OpenBrowser():
 
 conn = sqlite3.connect('db.sqlite')
 cur = conn.cursor()
-cur.execute('DROP TABLE IF EXISTS Counts')
-cur.execute('''CREATE TABLE Counts (email TEXT, count INTEGER, amazeprofile TEXT)''')
+#cur.execute('DROP TABLE IF EXISTS Counts')
+cur.execute('''CREATE TABLE IF NOT EXISTS Counts (email TEXT, count INTEGER, amazeprofile TEXT)''')
 browser = webdriver.Chrome()
 OpenBrowser()
