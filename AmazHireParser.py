@@ -3,25 +3,25 @@
 import re
 import sqlite3
 import os
-import csv
 import openpyxl
 import selenium
 import bs4
 import time
-import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 # Импорты ниже возможно будут использоваться, но сейчас нет. Использовать или удалить
-import pandas as pd
-from pandas import ExcelWriter
-from pandas import ExcelFile
+#import pandas as pd
+#from pandas import ExcelWriter
+#from pandas import ExcelFile
 # Импорты ниже удалить
 # import docx # pip install python-docx
 #import stat
 #import numpy as np
+#import csv
+#import requests
 
 def OpenBrowser():
     global browser
@@ -43,11 +43,13 @@ def OpenBrowser():
     ReadFolderAndFiles()
 
 def ReadFolderAndFiles():
+    global cwd
+    global cwdstr
     #foldername = (input('Enter a folder name: ')) # ждем ввода папки
-    foldername = ('workdir') # по умолчанию установлена папка workdir
-    cwd2 = cwd + foldername # собираем конструктор пути файла
-    for x in (os.listdir(cwd2)):
-        filename = cwd2 + '\\' + x # собираем конструктор пути файла
+    #foldername = ('workdir') # по умолчанию установлена папка workdir
+    #cwd2 = cwd + foldername # собираем конструктор пути файла
+    for x in (os.listdir(cwd)):
+        filename = cwdstr + '\\' + x # собираем конструктор пути файла
         print(filename)
         print(getText(filename))
         content.append(getText(filename)) # list # добавляем в конец листа
@@ -57,14 +59,12 @@ def ReadFolderAndFiles():
 def getText(filename):
     global cur
     global conn
-    os.chdir('C:\\Users\\Alex\\Desktop\\Learning\\Python\\Saske\\AmazingHiring_parser\\workdir')
+    #os.chdir('C:\\Users\\Alex\\Desktop\\Learning\\Python\\Saske\\AmazingHiring_parser\\workdir')
     workbook = openpyxl.load_workbook('Testlist.xlsx')
-    #sheet = workbook.get_sheet_by_name('Sheet1')
-    #DeprecationWarning: Call to deprecated function get_sheet_by_name (Use wb[sheetname]).
     sheet = workbook["Sheet1"]
-    print(sheet)
+    print('looking at the list', sheet)
     row_count = sheet.max_row
-    print(row_count)
+    print('count of the emails', (int(row_count)-1))
     imax = int(row_count)
     for i in range (2, imax):
         #Candicemail = str(sheet['A'+str(i)].value)
@@ -74,10 +74,26 @@ def getText(filename):
         candicemail = str(candicemail.value)
         cur.execute('SELECT count FROM Counts WHERE email = ? ', (candicemail,))
         row = cur.fetchone()
+        linktoprofile = []
         if row is None:
             cur.execute('INSERT INTO Counts (email, count) VALUES (?, 1)', (candicemail,))
             conn.commit()
-            URLsearchResults = Search(candicemail)
+#            URLsearchResults = Search(candicemail)
+            linktoprofilforinsert = Search(candicemail)
+            print('before insertions', linktoprofilforinsert)
+            # insert linktoprofile to xlsx
+            #
+            #
+            #
+            #
+            #
+            #
+            #
+            #
+            #
+            #
+            #
+            #
         else:
             print('It looks like we have alredy found', candicemail)
             cur.execute('UPDATE Counts SET count = count + 1 WHERE email = ? ', (candicemail,))
@@ -95,6 +111,8 @@ def Search(candicemail):
         PutToDB(linktoprofile, candicemail)
     except:
         print('Nothing was found')
+        linktoprofile = 'Nothing was found'
+    return linktoprofile
 
 def PutToDB(linktoprofile, candicemail):
     global cur
@@ -108,12 +126,14 @@ def PutToDB(linktoprofile, candicemail):
         print('After this line')
         conn.commit()
         print('After conn commit line')
+
     except:
         print('Something went wrong')
+    return linktoprofile
 
 
-
-cwd = os.getcwd() + '\\'
+cwd = os.chdir(os.getcwd() + '\\workdir')
+cwdstr = str(cwd)
 content = []
 conn = sqlite3.connect('db.sqlite')
 cur = conn.cursor()
