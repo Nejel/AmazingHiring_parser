@@ -12,16 +12,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
-# Импорты ниже возможно будут использоваться, но сейчас нет. Использовать или удалить
-#import pandas as pd
-#from pandas import ExcelWriter
-#from pandas import ExcelFile
-# Импорты ниже удалить
-# import docx # pip install python-docx
-#import stat
-#import numpy as np
-#import csv
-#import requests
 
 def OpenBrowser():
     global browser
@@ -51,15 +41,14 @@ def ReadFolderAndFiles():
     for x in (os.listdir(cwd)):
         filename = cwdstr + '\\' + x # собираем конструктор пути файла
         print(filename)
-        print(getText(filename))
-        content.append(getText(filename)) # list # добавляем в конец листа
+        #print(getText(filename))
+        content.append(ExcelWorks(filename)) # list # добавляем в конец листа
         #fullcontent = ''.join(content)
     return content # происходит выход из функции после завершения цикла for, в глобальное пространтсов возвращается значение контент
 
-def getText(filename):
+def ExcelWorks(filename):
     global cur
     global conn
-    #os.chdir('C:\\Users\\Alex\\Desktop\\Learning\\Python\\Saske\\AmazingHiring_parser\\workdir')
     workbook = openpyxl.load_workbook('Testlist.xlsx')
     sheet = workbook["Sheet1"]
     print('looking at the list', sheet)
@@ -67,8 +56,6 @@ def getText(filename):
     print('count of the emails', (int(row_count)-1))
     imax = int(row_count)
     for i in range (2, imax):
-        #Candicemail = str(sheet['A'+str(i)].value)
-        #Candicemail = sheet['A2']
         candicemail = sheet.cell(row = i, column = 1)
         print(candicemail.value)
         candicemail = str(candicemail.value)
@@ -78,22 +65,11 @@ def getText(filename):
         if row is None:
             cur.execute('INSERT INTO Counts (email, count) VALUES (?, 1)', (candicemail,))
             conn.commit()
-#            URLsearchResults = Search(candicemail)
             linktoprofilforinsert = Search(candicemail)
             print('before insertions', linktoprofilforinsert)
             # insert linktoprofile to xlsx
-            #
-            #
-            #
-            #
-            #
-            #
-            #
-            #
-            #
-            #
-            #
-            #
+            sheet.cell(row = i, column = 2).value = linktoprofilforinsert
+            workbook.save('Testlist.xlsx')
         else:
             print('It looks like we have alredy found', candicemail)
             cur.execute('UPDATE Counts SET count = count + 1 WHERE email = ? ', (candicemail,))
@@ -126,10 +102,10 @@ def PutToDB(linktoprofile, candicemail):
         print('After this line')
         conn.commit()
         print('After conn commit line')
-
     except:
         print('Something went wrong')
     return linktoprofile
+
 
 
 cwd = os.chdir(os.getcwd() + '\\workdir')
