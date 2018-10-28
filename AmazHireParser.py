@@ -15,9 +15,6 @@ from selenium.webdriver.common.keys import Keys
 
 def OpenBrowser():
     global browser
-    # спрашиваем логин пароль
-    username = input('USERNAME:', )
-    password = input('PASSWD:', )
     # открываем броузер
     browser.get('https://search.amazinghiring.com/login/?next=/')
     time.sleep(1)
@@ -35,9 +32,6 @@ def OpenBrowser():
 def ReadFolderAndFiles():
     global cwd
     global cwdstr
-    #foldername = (input('Enter a folder name: ')) # ждем ввода папки
-    #foldername = ('workdir') # по умолчанию установлена папка workdir
-    #cwd2 = cwd + foldername # собираем конструктор пути файла
     for x in (os.listdir(cwd)):
         filename = cwdstr + '\\' + x # собираем конструктор пути файла
         print(filename)
@@ -49,6 +43,8 @@ def ReadFolderAndFiles():
 def ExcelWorks(filename):
     global cur
     global conn
+    global linktoprofile
+    global skills
     workbook = openpyxl.load_workbook('Testlist.xlsx')
     sheet = workbook["Sheet1"]
     print('looking at the list', sheet)
@@ -61,14 +57,15 @@ def ExcelWorks(filename):
         candicemail = str(candicemail.value)
         cur.execute('SELECT count FROM Counts WHERE email = ? ', (candicemail,))
         row = cur.fetchone()
-        linktoprofile = []
+        #linktoprofile = []
         if row is None:
             cur.execute('INSERT INTO Counts (email, count) VALUES (?, 1)', (candicemail,))
             conn.commit()
-            linktoprofilforinsert = Search(candicemail)
-            print('before insertions', linktoprofilforinsert)
+            Search(candicemail)
+            print('before insertions', linktoprofile)
             # insert linktoprofile to xlsx
-            sheet.cell(row = i, column = 2).value = linktoprofilforinsert
+            sheet.cell(row = i, column = 2).value = linktoprofile
+            sheet.cell(row = i, column = 3).value = skills
             workbook.save('Testlist.xlsx')
         else:
             print('It looks like we have alredy found', candicemail)
@@ -77,6 +74,8 @@ def ExcelWorks(filename):
 
 def Search(candicemail):
     global browser
+    global linktoprofile
+    global skills
     candicemailconstr = str(re.sub(r'@', '%40', candicemail))
     URLconstr = ('https://search.amazinghiring.com/profiles/?q=booleanText[0]:' + candicemailconstr)
     browser.get(URLconstr)
@@ -84,13 +83,17 @@ def Search(candicemail):
     try:
         linktoprofile = browser.find_element_by_xpath("//a[contains(@href,'profile')]").get_attribute("href")
         print('I found some guy', linktoprofile)
-        PutToDB(linktoprofile, candicemail)
+        try:
+            skills = browser.find_element_by_xpath("//*[contains(@class,'Skills-skill__skill')]").text
+            print('skills found: ', skills)
+        except:
+            print('unluck to find any skills')#
+        PutToDB(linktoprofile, candicemail, skills)
     except:
         print('Nothing was found')
-        linktoprofile = 'Nothing was found'
     return linktoprofile
 
-def PutToDB(linktoprofile, candicemail):
+def PutToDB(linktoprofile, candicemail, skills):
     global cur
     global conn
     print('Trying to put him in DB')
@@ -98,7 +101,7 @@ def PutToDB(linktoprofile, candicemail):
     row = cur.fetchone()
     try:
         print('Im trying', linktoprofile)
-        cur.execute('INSERT INTO Counts (email, count, amazeprofile) VALUES (?, 1, ?)', (candicemail, linktoprofile)) # что-то здесь нечисто
+        cur.execute('INSERT INTO Counts (email, count, amazeprofile, skill) VALUES (?, 1, ?, ?)', (candicemail, linktoprofile, skills)) # что-то здесь нечисто
         print('After this line')
         conn.commit()
         print('After conn commit line')
@@ -107,13 +110,20 @@ def PutToDB(linktoprofile, candicemail):
     return linktoprofile
 
 
-
+username = input('USERNAME:', )
+password = input('PASSWD:', )
+linktoprofile = 'Nothing was found'
+skills = 'skills wasnt found'
 cwd = os.chdir(os.getcwd() + '\\workdir')
 cwdstr = str(cwd)
+whattofind = open('whattofind.txt', 'r')
+whattofindfile = whattofind.read()
+print('I\'am looking for:', whattofindfile.split(','))
+whattofindfilesearch = whattofindfile.split(',')
 content = []
 conn = sqlite3.connect('db.sqlite')
 cur = conn.cursor()
 #cur.execute('DROP TABLE IF EXISTS Counts')
-cur.execute('''CREATE TABLE IF NOT EXISTS Counts (email TEXT, count INTEGER, amazeprofile TEXT)''')
+cur.execute('''CREATE TABLE IF NOT EXISTS Counts (email TEXT, count INTEGER, amazeprofile TEXT, skill TEXT)''')
 browser = webdriver.Chrome()
 OpenBrowser()
