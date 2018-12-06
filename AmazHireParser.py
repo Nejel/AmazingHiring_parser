@@ -4,19 +4,14 @@ import re
 import sqlite3
 import os
 import openpyxl
-import selenium
-import bs4
 import time
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.select import Select
-from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 
 def OpenBrowser():
     global browser # открываем броузер
     browser.get('https://search.amazinghiring.com/login/?next=/')
-    input('It\'s time to accept cookies and press Enter')
+    input('It\'s time to accept cookies banner! Please, go to browser, press \'Accept\'., then go bach here and press Enter')
     # логинимся
     Emailinsert = browser.find_element_by_css_selector('#app > div > div:nth-child(3) > div > div.Login-centerBlock___3BZag > form > div:nth-child(4) > div:nth-child(1) > input')
     Passwordinsert = browser.find_element_by_css_selector('#app > div > div:nth-child(3) > div > div.Login-centerBlock___3BZag > form > div:nth-child(4) > div:nth-child(2) > input')
@@ -50,40 +45,44 @@ def ExcelWorks(filename):
 
     try:
         workbook = openpyxl.load_workbook(filename)
-        sheet = workbook["Sheet1"]
+        print(workbook.sheetnames[0])
+        sheet = workbook.sheetnames[0]
+        worksheet = workbook.get_sheet_by_name(sheet)
     except:
         input("It looks like XLSX is open, please close it and press Enter", )
         workbook = openpyxl.load_workbook(filename)
-        sheet = workbook["Sheet1"]
-    print('looking at the list', sheet)
-    row_count = sheet.max_row
-    print('count of the emails', (int(row_count)-1))
+        print(workbook.sheetnames[0])
+        worksheet = workbook.get_sheet_by_name(sheet)
+        #worksheet = workbook.sheetnames[0]
+    print('Looking at the list', sheet)
+    row_count = worksheet.max_row
+    print('Count of the emails', (int(row_count)-1))
     imax = int(row_count)
     for i in range (2, imax):
-        candicemail = sheet.cell(row = i, column = 1)
-        print(candicemail.value)
-        print("Progress " + str(i) + "/" + str(imax))
+        candicemail = worksheet.cell(row = i, column = 1)
+        #print(candicemail.value)
+        print("Progress " + str(i) + "/" + str(imax) + " with email " + candicemail.value)
         candicemail = str(candicemail.value)
         cur.execute('SELECT count FROM Counts WHERE email = ? ', (candicemail,))
         row = cur.fetchone()
         #linktoprofile = []
         if row is None:
             Search(candicemail)
-            print('before insertions', linktoprofile)
+            #print('before insertions', linktoprofile)
             # insert linktoprofile to xlsx
-            print(type(linktoprofile))
-            sheet.cell(row = i, column = 2).value = linktoprofile
-            sheet.cell(row = i, column = 3).value = skills
-            workbook.save('Testlist.xlsx')
+            #print(type(linktoprofile))
+            worksheet.cell(row = i, column = 2).value = linktoprofile
+            worksheet.cell(row = i, column = 3).value = skills
+            workbook.save(filename)
         else:
-            print('It looks like we have alredy found', candicemail)
+            #print('It looks like we have alredy found', candicemail)
             cur.execute('UPDATE Counts SET count = count + 1 WHERE email = ? ', (candicemail,))
             conn.commit()
-            print('before insertions ELSE part', linktoprofile)
+            #print('before insertions ELSE part', linktoprofile)
             GetFromDBtoXLSX(candicemail, i)
-            sheet.cell(row = i, column = 2).value = str(row2[0])
-            sheet.cell(row = i, column = 3).value = str(row2[1])
-            workbook.save('Testlist.xlsx')
+            worksheet.cell(row = i, column = 2).value = str(row2[0])
+            worksheet.cell(row = i, column = 3).value = str(row2[1])
+            workbook.save(filename)
 
 def Search(candicemail):
     global browser
@@ -116,11 +115,11 @@ def PutToDB(linktoprofile, candicemail, skills):
     cur.execute('SELECT amazeprofile FROM Counts WHERE email = ? ', (candicemail,))
     row = cur.fetchone()
     try:
-        print('Im trying', linktoprofile)
+        #print('Im trying', linktoprofile)
         cur.execute('INSERT INTO Counts (email, count, amazeprofile, skill) VALUES (?, 1, ?, ?)', (candicemail, linktoprofile, skills)) # что-то здесь нечисто
-        print('After this line')
+        #print('After this line')
         conn.commit()
-        print('After conn commit line')
+        #print('After conn commit line')
     except:
         print('Something went wrong in PutToDB')
     return linktoprofile
@@ -134,22 +133,24 @@ def GetFromDBtoXLSX(candicemail, i):
     cur.execute('SELECT amazeprofile, skill FROM Counts WHERE email = ? ', (candicemail,))
     row2 = cur.fetchone()
     try:
-        print('Im trying to take him blah blah blah')
-        print("Hi blea" + str(row2))
-        print('before insertions EPTABLEA')
+        #print('Im trying to GetFromDBtoXLSX %s') % (row2)
+        #print("Hi blea" + str(row2))
+        #print('before insertions EPTABLEA')
         # insert linktoprofile to xlsx
         # workbook = openpyxl.load_workbook('Testlist.xlsx')
         # sheet = workbook["Sheet1"]
-        print(row2[0])
-        print(row2[1])
-        print(type(row2[0]))
-        print(i)
+        #print(row2[0])
+        #print(row2[1])
+        #print(type(row2[0]))
+        #print(i)
         # sheet.cell(row = i, column = 2).value = "TESTSTRING" #str(row[0])
         # sheet.cell(row = i, column = 3).value = "TESTSTRING2" #str(row[1])
         # workbook.save('Testlist.xlsx')
-        print('Something was good?')
+        #print('Something was good?')
+        pass
     except:
-        print('Something went wrong in GetFromDBtoXLSX')
+        pass
+        #print('Something went wrong in GetFromDBtoXLSX')
 
 print("Mr Neko is ready to help ya (=^‥^)/’`")
 username = input('Please enter Am-Hiring USERNAME:', )
