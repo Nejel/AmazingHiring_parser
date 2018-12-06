@@ -25,6 +25,7 @@ def OpenBrowser():
 def ReadFolderAndFiles():
     global cwd
     global cwdstr
+
     for x in (os.listdir(cwd)):
         filename = cwdstr + '\\' + x # собираем конструктор пути файла
         print(filename)
@@ -36,21 +37,22 @@ def ReadFolderAndFiles():
         else: pass
     return content
 
-def ExcelWorks(filename):
+def ExcelWorks(x):
     global cur
     global conn
     global linktoprofile
     global skills
     global row2
 
+
     try:
-        workbook = openpyxl.load_workbook(filename)
+        workbook = openpyxl.load_workbook(x)
         print(workbook.sheetnames[0])
         sheet = workbook.sheetnames[0]
         worksheet = workbook.get_sheet_by_name(sheet)
     except:
         input("It looks like XLSX is open, please close it and press Enter", )
-        workbook = openpyxl.load_workbook(filename)
+        workbook = openpyxl.load_workbook(x)
         print(workbook.sheetnames[0])
         worksheet = workbook.get_sheet_by_name(sheet)
         #worksheet = workbook.sheetnames[0]
@@ -73,7 +75,7 @@ def ExcelWorks(filename):
             #print(type(linktoprofile))
             worksheet.cell(row = i, column = 2).value = linktoprofile
             worksheet.cell(row = i, column = 3).value = skills
-            workbook.save(filename)
+            workbook.save(x)
         else:
             #print('It looks like we have alredy found', candicemail)
             cur.execute('UPDATE Counts SET count = count + 1 WHERE email = ? ', (candicemail,))
@@ -82,7 +84,7 @@ def ExcelWorks(filename):
             GetFromDBtoXLSX(candicemail, i)
             worksheet.cell(row = i, column = 2).value = str(row2[0])
             worksheet.cell(row = i, column = 3).value = str(row2[1])
-            workbook.save(filename)
+            workbook.save(x)
 
 def Search(candicemail):
     global browser
@@ -169,6 +171,7 @@ row2 = []
 # whattofindfilesearch = whattofindfile.split(',')
 
 content = []
+x = []
 conn = sqlite3.connect('db.sqlite')
 cur = conn.cursor()
 #cur.execute('DROP TABLE IF EXISTS Counts')
